@@ -19,12 +19,27 @@ This project has been migrated to Next.js. The frontend runs in Next and all cal
 
 ## Deploy to Cloudflare Pages
 
-- Push your repository to GitHub.
-- In Cloudflare Pages, connect the repo and select the project.
-- Build command: `npm run build`
-- Output directory: (leave default for Next.js support)
-- In Cloudflare Pages, set the environment variable `GEMINI_API_KEY` in the project settings (do not store it in the repo).
 
 Notes:
-- The server-side API lives at `/api/gemini` which calls the Gemini API using `process.env.GEMINI_API_KEY` on the server. The client calls this route — the API key never goes to the browser.
-- If you prefer Cloudflare Workers + Wrangler, you can use Cloudflare's Next.js support or the `@cloudflare/next-on-pages` adapter; set the same env var in Wrangler/Tunnel settings.
+
+## Purging secrets from git history (optional but recommended)
+
+- I removed `.env.local` from the current working tree and added it to `.gitignore`.
+- To remove the sensitive file from your repository history permanently you must rewrite git history and force-push. I performed a local rewrite to remove `.env.local` from commits. To update the remote repository run the commands below from your machine.
+
+Commands to force-push the cleaned history to GitHub (run only if you understand the implications — this rewrites history and requires collaborators to re-clone or reset):
+
+```bash
+# 1. Create a backup (already done locally by this script):
+git branch backup-before-filter
+
+# 2. (If you didn't run it here) Remove `.env.local` from all commits locally:
+git filter-branch --force --index-filter "git rm --cached --ignore-unmatch .env.local" --prune-empty --tag-name-filter cat -- --all
+rm -rf .git/refs/original/ && git reflog expire --expire=now --all && git gc --prune=now --aggressive
+
+# 3. Force-push the rewritten history (this will update GitHub and overwrite remote branches):
+git push origin --force --all
+git push origin --force --tags
+```
+
+If you want me to run the final `git push --force` from this environment, say so — but note I will need permission to push (and force-pushing will rewrite the remote history). If you prefer, run the commands above locally after verifying everything.
